@@ -1,16 +1,10 @@
 package sml
 
-import sml.instructions.*
 import java.io.File
 import java.io.IOException
-import java.lang.reflect.Constructor
 import java.util.Scanner
 import kotlin.collections.ArrayList
-import kotlin.reflect.KClass
-import kotlin.reflect.KTypeParameter
-import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.createType
-import kotlin.reflect.full.memberProperties
 
 /*
  * The machine language interpreter
@@ -103,99 +97,43 @@ data class Machine(var pc: Int, val noOfRegisters: Int) {
      * Translate line into an instruction with label label and return the instruction
      */
     fun getInstruction(label: String): Instruction {
-        val s1: Int // Possible operands of the instruction
-        val s2: Int
-        val r: Int
-        val label2: String
 
         val ins = scan().capitalize()
 
         //generate an appropriate class name based on "ins"
         val classObjName: String = (ins + "Instruction")
-        println(classObjName)
+
         //generate kotlin class - turn classObjName into a class kClass
         val kClass = Class.forName("sml.instructions."+classObjName).kotlin
-        println(kClass.toString())
+
         //ask what kClass is expecting
         val parameterTypes = kClass.constructors.elementAt(0).parameters
 
-        println (parameterTypes.size)
-        for (i in parameterTypes) {
-            println(i.type)
-        }
-
-        //analyse label for instruction plus arguments
-        //scan for expected parameters / number and type of arguments
+        //making an instruction from label plus arguments
+        //scan for expected parameters and number and type of arguments
+        //construct instruction
         fun scanInstruction (): Instruction {
+
             val paramList = arrayOfNulls<Any?>(parameterTypes.size)
+
             for ((i,e) in parameterTypes.withIndex()) {
+
                 if (i == 0) {
                     paramList[i] = label
                 }
                 else if (e.type == Int::class.createType()) {
                     paramList[i] = scanInt()
-                    print("int scanned")
                 } else {
                     paramList[i] = scan()
-                    print("other scanned")
                 }
-                print(e.type)
-                print(i)
-                println (paramList[i])
             }
+
             return kClass.constructors.elementAt(0).call(*paramList) as Instruction
         }
 
-        //call constructor
-        //classObj.createInstance(params)
-
         return scanInstruction()
 
-        //return when class name is found
-/**        return when (ins) { // replace with reflection
-            "Add" -> {
-                r = scanInt()
-                s1 = scanInt()
-                s2 = scanInt()
-                AddInstruction(label, r, s1, s2)
-            }
-            "Sub" -> {
-                r = scanInt()
-                s1 = scanInt()
-                s2 = scanInt()
-                SubInstruction(label, r, s1, s2)
-            }
-            "Mul" -> {
-                r = scanInt()
-                s1 = scanInt()
-                s2 = scanInt()
-                MulInstruction(label, r, s1, s2)
-            }
-            "Div" -> {
-                r = scanInt()
-                s1 = scanInt()
-                s2 = scanInt()
-                MulInstruction(label, r, s1, (1 / s2))
-            }
-            "Out" -> {
-                s1 = scanInt()
-                OutInstruction(label, s1)
-            }
-            "Lin" -> {
-                r = scanInt()
-                s1 = scanInt()
-                LinInstruction(label, r, s1)
-            }
-            "Bnz" -> {
-                r = scanInt()
-                label2 = scan()
-                BnzInstruction(label, r, label2)
-            }
-            else -> {
-                NoOpInstruction(label, line)
-            }
-        }
-*/    }
+    }
 
     /*
      * Return the first word of line and remove it from line. If there is no
